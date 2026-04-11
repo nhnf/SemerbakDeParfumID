@@ -14,7 +14,7 @@ class SectionHeader extends StatelessWidget {
           fontFamily: 'Plus Jakarta Sans',
           fontSize: 20,
           fontWeight: FontWeight.w900,
-          color: const Color.fromARGB(255, 49, 46, 129),
+          color: const Color.fromARGB(225, 0, 6, 102),
         ),
       ),
     );

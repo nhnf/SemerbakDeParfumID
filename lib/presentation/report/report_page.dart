@@ -85,15 +85,11 @@ class _ReportPageState extends State<ReportPage> {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF1E2857), Color(0xFF131526)],
-                ),
+                color: const Color.fromARGB(225, 0, 6, 102),
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF1E2857).withOpacity(0.3),
+                    color: const Color(0xFF1E2857).withValues(alpha: 0.3),
                     blurRadius: 15,
                     offset: const Offset(0, 8),
                   ),
@@ -105,10 +101,10 @@ class _ReportPageState extends State<ReportPage> {
                     'LABA BERSIH (7 HARI TERAKHIR)',
                     style: TextStyle(
                       fontFamily: 'Manrope',
-                      fontSize: 10,
+                      fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFFDCA73A),
-                      letterSpacing: 1.5,
+                      color: Colors.white,
+                      letterSpacing: 2.4,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -116,9 +112,10 @@ class _ReportPageState extends State<ReportPage> {
                     'Rp ${formatter.format(labaBersih)}',
                     style: const TextStyle(
                       fontFamily: 'Plus Jakarta Sans',
-                      fontSize: 32,
+                      fontSize: 40,
                       fontWeight: FontWeight.w900,
                       color: Colors.white,
+                      letterSpacing: -1.2,
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -147,13 +144,12 @@ class _ReportPageState extends State<ReportPage> {
 
             // 2. GRAFIK (BAR CHART)
             const Text(
-              'GRAFIK ARUS KAS',
+              'Grafik Arus Kas',
               style: TextStyle(
-                fontFamily: 'Manrope',
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF94A3B8),
-                letterSpacing: 1,
+                fontFamily: 'Plus Jakarta Sans',
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                color: Color.fromARGB(225, 0, 6, 102),
               ),
             ),
             const SizedBox(height: 16),
@@ -165,7 +161,7 @@ class _ReportPageState extends State<ReportPage> {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.04),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -224,7 +220,7 @@ class _ReportPageState extends State<ReportPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildLegendItem('Pemasukan', const Color(0xFFDCA73A)),
+                _buildLegendItem('Pemasukan', const Color.fromARGB(225, 0, 6, 102)),
                 const SizedBox(width: 16),
                 _buildLegendItem('Pengeluaran', const Color(0xFFFF7675)),
               ],
@@ -233,13 +229,12 @@ class _ReportPageState extends State<ReportPage> {
 
             // 3. ACTION BUTTONS (DOWNLOAD PDF)
             const Text(
-              'EKSPOR LAPORAN',
+              'Ekspor Laporan',
               style: TextStyle(
-                fontFamily: 'Manrope',
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF94A3B8),
-                letterSpacing: 1,
+                fontFamily: 'Plus Jakarta Sans',
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                color: Color.fromARGB(225, 0, 6, 102),
               ),
             ),
             const SizedBox(height: 16),
@@ -268,7 +263,7 @@ class _ReportPageState extends State<ReportPage> {
       children: [
         Container(
           padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(color: color.withOpacity(0.2), borderRadius: BorderRadius.circular(8)),
+          decoration: BoxDecoration(color: color.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(8)),
           child: Icon(icon, color: color, size: 16),
         ),
         const SizedBox(width: 12),
@@ -288,8 +283,8 @@ class _ReportPageState extends State<ReportPage> {
       x: x,
       barRods: [
         BarChartRodData(
-          toY: pemasukan, // Harus 'toY' bukan 'y' di versi 1.2.0. Ini juga warna gold.
-          color: const Color(0xFFDCA73A),
+          toY: pemasukan, // Harus 'toY' bukan 'y' di versi 1.2.0
+          color: const Color.fromARGB(225, 0, 6, 102),
           width: 8,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
         ),

@@ -1,21 +1,21 @@
 import '../../../domain/entities/transaction_entity.dart';
 import '../../../domain/repositories/transaction_repository.dart';
-import '../datasources/local/transaction_local_datasource.dart';
+import '../datasources/remote/supabase_datasource.dart';
 import '../models/transaction_model.dart';
 
 class TransactionRepositoryImpl implements TransactionRepository {
-  final TransactionLocalDataSource localDataSource;
+  final SupabaseDataSource remoteDataSource;
 
-  TransactionRepositoryImpl({required this.localDataSource});
+  TransactionRepositoryImpl({required this.remoteDataSource});
 
   @override
   Future<List<TransactionEntity>> getTransactions() async {
-    return await localDataSource.getTransactions();
+    return await remoteDataSource.getTransactions();
   }
 
   @override
   Future<void> addTransaction(TransactionEntity transaction) async {
     final model = TransactionModel.fromEntity(transaction);
-    await localDataSource.cacheTransaction(model);
+    await remoteDataSource.insertTransaction(model);
   }
 }

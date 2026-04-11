@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:semerbak_de_parfume_id/home_page.dart';
+import '../home/pages/home_page.dart';
 
 import '../catalog/catalog_page.dart';
 import '../report/report_page.dart';
@@ -52,17 +52,10 @@ class _MainPageState extends State<MainPage> {
         margin: const EdgeInsets.only(bottom: 16), // Memberi sedikit jarak ke bawah
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20), // Bentuk melengkung (rounded)
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFDCA73A), // Gold pudar
-              Color(0xFFB1801C), // Gold solid sesuai gambar referensi Anda
-            ],
-          ),
+          color: const Color.fromARGB(225, 0, 6, 102),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFB1801C).withValues(alpha: 0.3),
+              color: const Color.fromARGB(225, 0, 6, 102).withValues(alpha: 0.3),
               blurRadius: 10,
               offset: const Offset(0, 5),
             ),
