@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
+import '../../domain/entities/transaction_entity.dart';
+import '../transaction/bloc/transaction_bloc.dart';
+import '../transaction/bloc/transaction_state.dart';
+import '../transaction/bloc/transaction_event.dart';
 import 'pdf_service.dart';
 
 class ReportPage extends StatefulWidget {
@@ -12,40 +17,10 @@ class ReportPage extends StatefulWidget {
 }
 
 class _ReportPageState extends State<ReportPage> {
-  // Data dummy transaksi untuk grafik & laporan PDF (akan diganti Data Asli ke depan)
-  final List<Map<String, dynamic>> _dummyTransactions = [
-    {'date': '01 Apr', 'desc': 'Penjualan Baccarat', 'amount': 1500000, 'isPemasukan': true},
-    {'date': '02 Apr', 'desc': 'Penjualan Luxury Oud', 'amount': 900000, 'isPemasukan': true},
-    {'date': '03 Apr', 'desc': 'Beli Botol Kaca', 'amount': 420000, 'isPemasukan': false},
-    {'date': '04 Apr', 'desc': 'Penjualan Midnight Bloom', 'amount': 1350000, 'isPemasukan': true},
-    {'date': '05 Apr', 'desc': 'Sewa Stan', 'amount': 1000000, 'isPemasukan': false},
-    {'date': '06 Apr', 'desc': 'Penjualan Sweet Vanilla', 'amount': 2400000, 'isPemasukan': true},
-    {'date': '07 Apr', 'desc': 'Biaya Iklan', 'amount': 500000, 'isPemasukan': false},
-  ];
-
-  int _totalPemasukan = 0;
-  int _totalPengeluaran = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _calculateTotals();
-  }
-
-  void _calculateTotals() {
-    for (var tx in _dummyTransactions) {
-      if (tx['isPemasukan'] == true) {
-        _totalPemasukan += tx['amount'] as int;
-      } else {
-        _totalPengeluaran += tx['amount'] as int;
-      }
-    }
-  }
-
-  void _printOrDownloadPdf(String type) async {
+  void _printOrDownloadPdf(String type, List<Map<String, dynamic>> structuredData) async {
     final pdfBytes = await PdfService.generateReportPdf(
       reportType: type,
-      transactions: _dummyTransactions,
+      transactions: structuredData,
     );
     
     // Menampilkan Preview PDF yang kaya fitur (Print, Share, Save)
@@ -57,9 +32,6 @@ class _ReportPageState extends State<ReportPage> {
 
   @override
   Widget build(BuildContext context) {
-    final formatter = NumberFormat.decimalPattern('id');
-    final labaBersih = _totalPemasukan - _totalPengeluaran;
-
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
@@ -76,184 +48,225 @@ class _ReportPageState extends State<ReportPage> {
         elevation: 0,
         centerTitle: false,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 1. KARTU RINGKASAN UTAMA
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: const Color.fromARGB(225, 0, 6, 102),
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF1E2857).withValues(alpha: 0.3),
-                    blurRadius: 15,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
+      body: BlocBuilder<TransactionBloc, TransactionState>(
+        builder: (context, state) {
+          int totalPemasukan = 0;
+          int totalPengeluaran = 0;
+          List<Map<String, dynamic>> structuredData = [];
+
+          // Struktur data bar chart hari (Senin = 0, Selasa = 1 ... Minggu = 6)
+          List<double> pemasukanHarian = List.filled(7, 0.0);
+          List<double> pengeluaranHarian = List.filled(7, 0.0);
+
+          if (state is TransactionLoaded) {
+            // Kita fokus pada bulan ini untuk grafik
+            final now = DateTime.now();
+            final trBulanIni = state.transactions.where((t) => t.tanggal.year == now.year && t.tanggal.month == now.month).toList();
+            
+            for (var tx in trBulanIni) {
+              if (tx.isPemasukan) {
+                totalPemasukan += tx.total;
+                // mapping hari: weekday 1 = senin, maka index = weekday - 1
+                pemasukanHarian[tx.tanggal.weekday - 1] += tx.total.toDouble();
+              } else {
+                totalPengeluaran += tx.total;
+                pengeluaranHarian[tx.tanggal.weekday - 1] += tx.total.toDouble();
+              }
+            }
+
+            // Membentuk struktur untuk PDF
+            structuredData = state.transactions.map((tx) {
+              return {
+                'date': DateFormat('dd MMM yyyy').format(tx.tanggal),
+                'desc': tx.nama,
+                'amount': tx.total,
+                'isPemasukan': tx.isPemasukan,
+              };
+            }).toList();
+          }
+
+          final formatter = NumberFormat.decimalPattern('id');
+          final labaBersih = totalPemasukan - totalPengeluaran;
+
+          return RefreshIndicator(
+            onRefresh: () async {
+              context.read<TransactionBloc>().add(LoadTransactionsEvent());
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(24.0),
               child: Column(
-                children: [
-                  const Text(
-                    'LABA BERSIH (7 HARI TERAKHIR)',
-                    style: TextStyle(
-                      fontFamily: 'Manrope',
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      letterSpacing: 2.4,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Rp ${formatter.format(labaBersih)}',
-                    style: const TextStyle(
-                      fontFamily: 'Plus Jakarta Sans',
-                      fontSize: 40,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                      letterSpacing: -1.2,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildMiniStat(
-                        'Pemasukan',
-                        'Rp ${formatter.format(_totalPemasukan)}',
-                        Icons.arrow_upward,
-                        Colors.greenAccent,
-                      ),
-                      Container(width: 1, height: 40, color: Colors.white24),
-                      _buildMiniStat(
-                        'Pengeluaran',
-                        'Rp ${formatter.format(_totalPengeluaran)}',
-                        Icons.arrow_downward,
-                        Colors.redAccent,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. KARTU RINGKASAN UTAMA
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: const Color.fromARGB(225, 0, 6, 102),
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF1E2857).withValues(alpha: 0.3),
+                        blurRadius: 15,
+                        offset: const Offset(0, 8),
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
-
-            // 2. GRAFIK (BAR CHART)
-            const Text(
-              'Grafik Arus Kas',
-              style: TextStyle(
-                fontFamily: 'Plus Jakarta Sans',
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
-                color: Color.fromARGB(225, 0, 6, 102),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              height: 250,
-              padding: const EdgeInsets.only(top: 32, right: 16, bottom: 16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              // Render FlChart
-              child: BarChart(
-                BarChartData(
-                  alignment: BarChartAlignment.spaceAround,
-                  maxY: 3000000,
-                  barTouchData: BarTouchData(enabled: false),
-                  titlesData: FlTitlesData(
-                    show: true,
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        getTitlesWidget: (double value, _) {
-                          const style = TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.bold, fontSize: 10);
-                          switch (value.toInt()) {
-                            case 0: return const Text('Sen', style: style);
-                            case 1: return const Text('Sel', style: style);
-                            case 2: return const Text('Rab', style: style);
-                            case 3: return const Text('Kam', style: style);
-                            case 4: return const Text('Jum', style: style);
-                            case 5: return const Text('Sab', style: style);
-                            case 6: return const Text('Min', style: style);
-                            default: return const Text('', style: style);
-                          }
-                        },
+                  child: Column(
+                    children: [
+                      const Text(
+                        'LABA BERSIH (BULAN INI)',
+                        style: TextStyle(
+                          fontFamily: 'Manrope',
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          letterSpacing: 2.4,
+                        ),
                       ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Rp ${formatter.format(labaBersih)}',
+                        style: const TextStyle(
+                          fontFamily: 'Plus Jakarta Sans',
+                          fontSize: 40,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          letterSpacing: -1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildMiniStat(
+                            'Pemasukan',
+                            'Rp ${formatter.format(totalPemasukan)}',
+                            Icons.arrow_upward,
+                            Colors.greenAccent,
+                          ),
+                          Container(width: 1, height: 40, color: Colors.white24),
+                          _buildMiniStat(
+                            'Pengeluaran',
+                            'Rp ${formatter.format(totalPengeluaran)}',
+                            Icons.arrow_downward,
+                            Colors.redAccent,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+
+                // 2. GRAFIK (BAR CHART)
+                const Text(
+                  'Grafik Arus Kas (Bulan Ini)',
+                  style: TextStyle(
+                    fontFamily: 'Plus Jakarta Sans',
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: Color.fromARGB(225, 0, 6, 102),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  height: 250,
+                  padding: const EdgeInsets.only(top: 32, right: 16, bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  // Render FlChart
+                  child: BarChart(
+                    BarChartData(
+                      alignment: BarChartAlignment.spaceAround,
+                      maxY: 3000000,
+                      barTouchData: BarTouchData(enabled: false),
+                      titlesData: FlTitlesData(
+                        show: true,
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            getTitlesWidget: (double value, _) {
+                              const style = TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.bold, fontSize: 10);
+                              switch (value.toInt()) {
+                                case 0: return const Text('Sen', style: style);
+                                case 1: return const Text('Sel', style: style);
+                                case 2: return const Text('Rab', style: style);
+                                case 3: return const Text('Kam', style: style);
+                                case 4: return const Text('Jum', style: style);
+                                case 5: return const Text('Sab', style: style);
+                                case 6: return const Text('Min', style: style);
+                                default: return const Text('', style: style);
+                              }
+                            },
+                          ),
+                        ),
+                        leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      ),
+                      gridData: FlGridData(
+                        show: true,
+                        drawVerticalLine: false,
+                        horizontalInterval: 1000000,
+                        getDrawingHorizontalLine: (value) => FlLine(color: Colors.grey.shade200, strokeWidth: 1, dashArray: [5, 5]),
+                      ),
+                      borderData: FlBorderData(show: false),
+                      barGroups: [
+                        _buildBarGroup(0, pemasukanHarian[0], pengeluaranHarian[0]),
+                        _buildBarGroup(1, pemasukanHarian[1], pengeluaranHarian[1]),
+                        _buildBarGroup(2, pemasukanHarian[2], pengeluaranHarian[2]),
+                        _buildBarGroup(3, pemasukanHarian[3], pengeluaranHarian[3]),
+                        _buildBarGroup(4, pemasukanHarian[4], pengeluaranHarian[4]),
+                        _buildBarGroup(5, pemasukanHarian[5], pengeluaranHarian[5]),
+                        _buildBarGroup(6, pemasukanHarian[6], pengeluaranHarian[6]),
+                      ],
                     ),
-                    leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   ),
-                  gridData: FlGridData(
-                    show: true,
-                    drawVerticalLine: false,
-                    horizontalInterval: 1000000,
-                    getDrawingHorizontalLine: (value) => FlLine(color: Colors.grey.shade200, strokeWidth: 1, dashArray: [5, 5]),
-                  ),
-                  borderData: FlBorderData(show: false),
-                  barGroups: [
-                    _buildBarGroup(0, 1500000, 420000),
-                    _buildBarGroup(1, 900000, 0),
-                    _buildBarGroup(2, 0, 1000000),
-                    _buildBarGroup(3, 1350000, 0),
-                    _buildBarGroup(4, 2400000, 500000),
-                    _buildBarGroup(5, 500000, 100000), // dummy
-                    _buildBarGroup(6, 1200000, 200000), // dummy
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildLegendItem('Pemasukan', const Color.fromARGB(225, 0, 6, 102)),
+                    const SizedBox(width: 16),
+                    _buildLegendItem('Pengeluaran', const Color(0xFFFF7675)),
                   ],
                 ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildLegendItem('Pemasukan', const Color.fromARGB(225, 0, 6, 102)),
-                const SizedBox(width: 16),
-                _buildLegendItem('Pengeluaran', const Color(0xFFFF7675)),
+                const SizedBox(height: 32),
+
+                // 3. ACTION BUTTONS (DOWNLOAD PDF)
+                const Text(
+                  'Ekspor Laporan',
+                  style: TextStyle(
+                    fontFamily: 'Plus Jakarta Sans',
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: Color.fromARGB(225, 0, 6, 102),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildExportCard(
+                  title: 'Laporan Rekapitulasi Aktual',
+                  subtitle: 'Semua transaksi Supabase',
+                  icon: Icons.calendar_view_week,
+                  onTap: () => _printOrDownloadPdf('Aktual', structuredData),
+                ),
+                const SizedBox(height: 80), // Spacer untuk navbar
               ],
             ),
-            const SizedBox(height: 32),
-
-            // 3. ACTION BUTTONS (DOWNLOAD PDF)
-            const Text(
-              'Ekspor Laporan',
-              style: TextStyle(
-                fontFamily: 'Plus Jakarta Sans',
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
-                color: Color.fromARGB(225, 0, 6, 102),
-              ),
             ),
-            const SizedBox(height: 16),
-            _buildExportCard(
-              title: 'Laporan Mingguan',
-              subtitle: 'Rekapitulasi 7 hari terakhir',
-              icon: Icons.calendar_view_week,
-              onTap: () => _printOrDownloadPdf('Mingguan'),
-            ),
-            const SizedBox(height: 12),
-            _buildExportCard(
-              title: 'Laporan Bulanan',
-              subtitle: 'Rekapitulasi sebulan penuh',
-              icon: Icons.calendar_month,
-              onTap: () => _printOrDownloadPdf('Bulanan'),
-            ),
-            const SizedBox(height: 80), // Spacer untuk navbar
-          ],
-        ),
+          );
+        },
       ),
     );
   }

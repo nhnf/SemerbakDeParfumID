@@ -1,16 +1,22 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../domain/usecases/add_transaction.dart';
 import '../../../domain/usecases/get_transactions.dart';
+import '../../../domain/usecases/update_transaction.dart';
+import '../../../domain/usecases/delete_transaction.dart';
 import 'transaction_event.dart';
 import 'transaction_state.dart';
 
 class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
   final GetTransactions getTransactionsUseCase;
   final AddTransaction addTransactionUseCase;
+  final UpdateTransaction updateTransactionUseCase;
+  final DeleteTransaction deleteTransactionUseCase;
 
   TransactionBloc({
     required this.getTransactionsUseCase,
     required this.addTransactionUseCase,
+    required this.updateTransactionUseCase,
+    required this.deleteTransactionUseCase,
   }) : super(TransactionInitial()) {
     on<LoadTransactionsEvent>((event, emit) async {
       emit(TransactionLoading());
@@ -23,16 +29,35 @@ class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
     });
 
     on<AddTransactionEvent>((event, emit) async {
-      // Ingat state sebelumnya jika ada (untuk mencegah layar kedip jika tidak perlu loading layar penuh)
       emit(TransactionLoading());
       try {
-        // Eksekusi fungsi simpan ke lokal DB
         await addTransactionUseCase.execute(event.transaction);
-        // Setelah sukses, muat ulang daftar transaksi terbaru
         final transactions = await getTransactionsUseCase.execute();
         emit(TransactionLoaded(transactions));
       } catch (e) {
         emit(TransactionError("Gagal menambah transaksi: ${e.toString()}"));
+      }
+    });
+
+    on<UpdateTransactionEvent>((event, emit) async {
+      emit(TransactionLoading());
+      try {
+        await updateTransactionUseCase.execute(event.transaction);
+        final transactions = await getTransactionsUseCase.execute();
+        emit(TransactionLoaded(transactions));
+      } catch (e) {
+        emit(TransactionError("Gagal mengubah transaksi: ${e.toString()}"));
+      }
+    });
+
+    on<DeleteTransactionEvent>((event, emit) async {
+      emit(TransactionLoading());
+      try {
+        await deleteTransactionUseCase.execute(event.id);
+        final transactions = await getTransactionsUseCase.execute();
+        emit(TransactionLoaded(transactions));
+      } catch (e) {
+        emit(TransactionError("Gagal menghapus transaksi: ${e.toString()}"));
       }
     });
   }

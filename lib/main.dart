@@ -9,8 +9,11 @@ import 'data/datasources/remote/supabase_datasource.dart';
 import 'data/repositories/product_repository_impl.dart';
 import 'data/repositories/transaction_repository_impl.dart';
 import 'domain/usecases/add_transaction.dart';
+import 'domain/usecases/add_product.dart';
 import 'domain/usecases/get_products.dart';
 import 'domain/usecases/get_transactions.dart';
+import 'domain/usecases/update_transaction.dart';
+import 'domain/usecases/delete_transaction.dart';
 import 'presentation/catalog/bloc/product_bloc.dart';
 import 'presentation/catalog/bloc/product_event.dart';
 import 'presentation/transaction/bloc/transaction_bloc.dart';
@@ -39,13 +42,19 @@ void main() async {
 
   final getTransactions = GetTransactions(transactionRepository);
   final addTransaction = AddTransaction(transactionRepository);
+  final updateTransaction = UpdateTransaction(transactionRepository);
+  final deleteTransaction = DeleteTransaction(transactionRepository);
   final getProducts = GetProducts(productRepository);
+  final addProduct = AddProduct(productRepository);
 
   runApp(
     MyApp(
       getTransactionsUseCase: getTransactions,
       addTransactionUseCase: addTransaction,
+      updateTransactionUseCase: updateTransaction,
+      deleteTransactionUseCase: deleteTransaction,
       getProductsUseCase: getProducts,
+      addProductUseCase: addProduct,
     ),
   );
 }
@@ -53,13 +62,19 @@ void main() async {
 class MyApp extends StatelessWidget {
   final GetTransactions getTransactionsUseCase;
   final AddTransaction addTransactionUseCase;
+  final UpdateTransaction updateTransactionUseCase;
+  final DeleteTransaction deleteTransactionUseCase;
   final GetProducts getProductsUseCase;
+  final AddProduct addProductUseCase;
 
   const MyApp({
     super.key,
     required this.getTransactionsUseCase,
     required this.addTransactionUseCase,
+    required this.updateTransactionUseCase,
+    required this.deleteTransactionUseCase,
     required this.getProductsUseCase,
+    required this.addProductUseCase,
   });
 
   @override
@@ -70,12 +85,16 @@ class MyApp extends StatelessWidget {
           create: (context) => TransactionBloc(
             getTransactionsUseCase: getTransactionsUseCase,
             addTransactionUseCase: addTransactionUseCase,
+            updateTransactionUseCase: updateTransactionUseCase,
+            deleteTransactionUseCase: deleteTransactionUseCase,
           )..add(LoadTransactionsEvent()),
         ),
         BlocProvider<ProductBloc>(
           create: (context) =>
-              ProductBloc(getProductsUseCase: getProductsUseCase)
-                ..add(LoadProductsEvent()),
+              ProductBloc(
+                getProductsUseCase: getProductsUseCase,
+                addProductUseCase: addProductUseCase,
+              )..add(LoadProductsEvent()),
         ),
       ],
       child: MaterialApp(

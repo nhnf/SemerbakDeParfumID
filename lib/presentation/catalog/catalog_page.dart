@@ -61,8 +61,13 @@ class _CatalogPageState extends State<CatalogPage> {
       backgroundColor: const Color(0xFFF5F7F9),
       body: BlocBuilder<ProductBloc, ProductState>(
         builder: (context, state) {
-          return CustomScrollView(
-            slivers: [
+          return RefreshIndicator(
+            onRefresh: () async {
+              context.read<ProductBloc>().add(LoadProductsEvent());
+            },
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
               // -----------------------------------------------------------------
               // 1. HEADER NAVY (SliverAppBar)
               // -----------------------------------------------------------------
@@ -242,6 +247,7 @@ class _CatalogPageState extends State<CatalogPage> {
                 ),
               ],
             ],
+            ),
           );
         },
       ),

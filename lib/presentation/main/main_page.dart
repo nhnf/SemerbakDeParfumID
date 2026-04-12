@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../home/pages/home_page.dart';
 
 import '../catalog/catalog_page.dart';
+import '../catalog/pages/add_product_page.dart';
 import '../report/report_page.dart';
 import '../transaction/add_transaction_page.dart';
 
@@ -45,8 +46,8 @@ class _MainPageState extends State<MainPage> {
       // 4. Body (badan) dari halaman ini berubah-ubah mengikuti index yang aktif.
       body: _pages[_currentIndex],
 
-      // 5. Membuat tombol mengambang yang akan berguna untuk fitur "Tambah Transaksi"
-      floatingActionButton: Container(
+      // 5. Membuat tombol mengambang yang akan tertampil berbeda-beda di setiap halaman
+      floatingActionButton: _currentIndex == 2 ? null : Container(
         height: 64,
         width: 64,
         margin: const EdgeInsets.only(bottom: 16), // Memberi sedikit jarak ke bawah
@@ -65,13 +66,21 @@ class _MainPageState extends State<MainPage> {
         // agar gradient dari container pembungkusnya bisa terlihat.
         child: FloatingActionButton(
           onPressed: () {
-            // Aksi memanggil rute untuk membuka form AddTransactionPage
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const AddTransactionPage(),
-              ),
-            );
+            if (_currentIndex == 0) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AddTransactionPage(),
+                ),
+              );
+            } else if (_currentIndex == 1) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AddProductPage(),
+                ),
+              );
+            }
           },
           backgroundColor: Colors.transparent,
           elevation: 0,

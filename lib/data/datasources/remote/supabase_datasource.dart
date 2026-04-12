@@ -24,6 +24,16 @@ class SupabaseDataSource {
         .toList();
   }
 
+  /// Insert produk baru
+  Future<ProductModel> insertProduct(ProductModel model) async {
+    final response = await _client
+        .from('products')
+        .insert(model.toInsertMap())
+        .select()
+        .single();
+    return ProductModel.fromMap(response);
+  }
+
   // ============================================================
   // TRANSACTIONS
   // ============================================================
@@ -48,6 +58,18 @@ class SupabaseDataSource {
         .select()
         .single();
 
+    return TransactionModel.fromMap(response);
+  }
+
+  /// Update transaksi berdasarkan ID
+  Future<TransactionModel> updateTransaction(TransactionModel model) async {
+    if (model.id == null) throw Exception("Transaction ID is required for update.");
+    final response = await _client
+        .from('transactions')
+        .update(model.toInsertMap())
+        .eq('id', model.id!)
+        .select()
+        .single();
     return TransactionModel.fromMap(response);
   }
 

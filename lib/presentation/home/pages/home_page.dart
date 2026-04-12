@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../widgets/header_home.dart';
 import 'package:semerbak_de_parfume_id/presentation/home/widgets/statistik_home.dart';
 import '../../common/widgets/section_header.dart';
 import '../widgets/recent_transactions_list.dart';
+import '../../transaction/pages/all_transactions_page.dart';
+import '../../transaction/bloc/transaction_bloc.dart';
+import '../../transaction/bloc/transaction_event.dart';
+import '../../catalog/bloc/product_bloc.dart';
+import '../../catalog/bloc/product_event.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -21,7 +27,13 @@ class _HomePageState extends State<HomePage> {
       backgroundColor: AppColors.background,
       body: SafeArea(
         bottom: false,
-        child: SingleChildScrollView(
+        child: RefreshIndicator(
+          onRefresh: () async {
+            context.read<TransactionBloc>().add(LoadTransactionsEvent());
+            context.read<ProductBloc>().add(LoadProductsEvent());
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -73,11 +85,22 @@ class _HomePageState extends State<HomePage> {
               ),
               const SectionHeader(judul: "Statistik Cepat"),
               const StatistikHome(),
-              const SectionHeader(judul: "Transaksi Terakhir"),
+              SectionHeader(
+                judul: "Transaksi Terakhir",
+                onSeeAll: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AllTransactionsPage(),
+                    ),
+                  );
+                },
+              ),
               const RecentTransactionsList(),
               const SizedBox(height: 200),
             ],
           ),
+        ),
         ),
       ),
     );

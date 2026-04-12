@@ -18,4 +18,15 @@ class TransactionRepositoryImpl implements TransactionRepository {
     final model = TransactionModel.fromEntity(transaction);
     await remoteDataSource.insertTransaction(model);
   }
+
+  @override
+  Future<void> updateTransaction(TransactionEntity transaction) async {
+    final model = TransactionModel.fromEntity(transaction);
+    await remoteDataSource.updateTransaction(model);
+  }
+
+  @override
+  Future<void> deleteTransaction(String id) async {
+    await remoteDataSource.deleteTransaction(id);
+  }
 }
