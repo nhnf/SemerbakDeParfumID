@@ -20,14 +20,12 @@ class _AddProductPageState extends State<AddProductPage> {
   final _namaController = TextEditingController();
   final _kategoriController = TextEditingController();
   final _stokController = TextEditingController();
-  final _hargaController = TextEditingController();
 
   @override
   void dispose() {
     _namaController.dispose();
     _kategoriController.dispose();
     _stokController.dispose();
-    _hargaController.dispose();
     super.dispose();
   }
 
@@ -38,14 +36,10 @@ class _AddProductPageState extends State<AddProductPage> {
       
       final String stokText = _stokController.text.replaceAll(RegExp(r'[^0-9]'), '');
       final int stok = int.tryParse(stokText) ?? 0;
-      
-      final String hargaText = _hargaController.text.replaceAll(RegExp(r'[^0-9]'), '');
-      final int harga = int.tryParse(hargaText) ?? 0;
 
       final produkBaru = ProductEntity(
         name: nama,
         category: kategori,
-        price: harga,
         stock: stok,
       );
 
@@ -94,42 +88,13 @@ class _AddProductPageState extends State<AddProductPage> {
               ),
               const SizedBox(height: 20),
 
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildLabel('Stok Awal *'),
-                        _buildTextField(
-                          controller: _stokController,
-                          hintText: '0',
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                          validator: (value) => value == null || value.isEmpty ? 'Stok diperlukan' : null,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    flex: 2,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildLabel('Harga Satuan *'),
-                        _buildTextField(
-                          controller: _hargaController,
-                          hintText: '0',
-                          prefixText: 'Rp ',
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                          validator: (value) => value == null || value.isEmpty ? 'Harga diperlukan' : null,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+              _buildLabel('Stok Awal *'),
+              _buildTextField(
+                controller: _stokController,
+                hintText: '0',
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                validator: (value) => value == null || value.isEmpty ? 'Stok diperlukan' : null,
               ),
               
               const SizedBox(height: 48),

@@ -5,17 +5,15 @@ class ProductModel extends ProductEntity {
     super.id,
     required super.name,
     required super.category,
-    required super.price,
     required super.stock,
   });
 
   factory ProductModel.fromMap(Map<String, dynamic> map) {
     return ProductModel(
-      id: map['id'] as String?,
-      name: map['name'] as String,
+      id: map['id']?.toString() ?? map['uuid']?.toString() ?? map['name']?.toString(),
+      name: map['name'] as String? ?? 'Unknown',
       category: map['category'] as String? ?? '',
-      price: (map['price'] as num).toInt(),
-      stock: (map['stock'] as num).toInt(),
+      stock: (map['stock'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -24,7 +22,6 @@ class ProductModel extends ProductEntity {
       'id': id,
       'name': name,
       'category': category,
-      'price': price,
       'stock': stock,
     };
   }
@@ -33,7 +30,6 @@ class ProductModel extends ProductEntity {
     return {
       'name': name,
       'category': category,
-      if (price != null) 'price': price,
       if (stock != null) 'stock': stock,
     };
   }
@@ -43,7 +39,6 @@ class ProductModel extends ProductEntity {
       id: entity.id,
       name: entity.name,
       category: entity.category,
-      price: entity.price,
       stock: entity.stock,
     );
   }
