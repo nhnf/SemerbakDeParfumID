@@ -17,3 +17,21 @@ class AddProductEvent extends ProductEvent {
   @override
   List<Object> get props => [product];
 }
+
+class UpdateProductEvent extends ProductEvent {
+  final ProductEntity product;
+
+  const UpdateProductEvent(this.product);
+
+  @override
+  List<Object> get props => [product];
+}
+
+class DeleteProductEvent extends ProductEvent {
+  final String productId;
+
+  const DeleteProductEvent(this.productId);
+
+  @override
+  List<Object> get props => [productId];
+}

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import '../../common/widgets/card_statistik.dart';
-import '../../catalog/bloc/product_bloc.dart';
-import '../../catalog/bloc/product_state.dart';
+import '../../catalog/bloc/bottle_stock_bloc.dart';
+import '../../catalog/bloc/bottle_stock_state.dart';
 import '../../transaction/bloc/transaction_bloc.dart';
 import '../../transaction/bloc/transaction_state.dart';
 
@@ -14,25 +14,26 @@ class StatistikHome extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<TransactionBloc, TransactionState>(
       builder: (context, txState) {
-        return BlocBuilder<ProductBloc, ProductState>(
-          builder: (context, prodState) {
+        return BlocBuilder<BottleStockBloc, BottleStockState>(
+          builder: (context, bottleState) {
             final formatter = NumberFormat.decimalPattern('id');
 
             // Kalkulasi Total Parfum Terjual
             int totalTerjual = 0;
             if (txState is TransactionLoaded) {
               for (var tx in txState.transactions) {
+                // Semua transaksi pemasukan dianggap sebagai penjualan parfum
                 if (tx.isPemasukan) {
                   totalTerjual += tx.qty;
                 }
               }
             }
 
-            // Kalkulasi Total Stok Tersedia
-            int totalStok = 0;
-            if (prodState is ProductLoaded) {
-              for (var p in prodState.products) {
-                totalStok += p.stock;
+            // Kalkulasi Total Stok Tersedia (Semua Botol)
+            int totalStokBotol = 0;
+            if (bottleState is BottleStockLoaded) {
+              for (var bottle in bottleState.stocks) {
+                totalStokBotol += bottle.stok;
               }
             }
 
@@ -49,8 +50,8 @@ class StatistikHome extends StatelessWidget {
                     ),
                     CardStatistik(
                       icon: 'assets/icons/bottle.png',
-                      amount: prodState is ProductLoading ? '...' : formatter.format(totalStok),
-                      label: 'TOTAL STOK TERSEDIA',
+                      amount: bottleState is BottleStockLoading ? '...' : formatter.format(totalStokBotol),
+                      label: 'TOTAL STOK BOTOL',
                     ),
                   ],
                 ),
@@ -62,3 +63,4 @@ class StatistikHome extends StatelessWidget {
     );
   }
 }
+

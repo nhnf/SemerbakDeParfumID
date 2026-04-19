@@ -36,6 +36,20 @@ class SupabaseDataSource {
     return ProductModel.fromMap(response);
   }
 
+  /// Update produk berdasarkan ID
+  Future<void> updateProduct(ProductModel model) async {
+    if (model.id == null) throw Exception('Product ID is required for update.');
+    await _client
+        .from('products')
+        .update({'name': model.name, 'category': model.category, 'stock': model.stock})
+        .eq('id', model.id!);
+  }
+
+  /// Hapus produk berdasarkan ID
+  Future<void> deleteProduct(String productId) async {
+    await _client.from('products').delete().eq('id', productId);
+  }
+
   // ============================================================
   // TRANSACTIONS
   // ============================================================

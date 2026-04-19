@@ -22,7 +22,8 @@ class CatalogPage extends StatefulWidget {
   State<CatalogPage> createState() => _CatalogPageState();
 }
 
-class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStateMixin {
+class _CatalogPageState extends State<CatalogPage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -57,9 +58,11 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
   List<ProductEntity> _filterProducts(List<ProductEntity> products) {
     if (_searchQuery.isEmpty) return products;
     return products
-        .where((p) =>
-            p.name.toLowerCase().contains(_searchQuery) ||
-            p.category.toLowerCase().contains(_searchQuery))
+        .where(
+          (p) =>
+              p.name.toLowerCase().contains(_searchQuery) ||
+              p.category.toLowerCase().contains(_searchQuery),
+        )
         .toList();
   }
 
@@ -144,7 +147,7 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
                 ),
                 tabs: const [
                   Tab(text: 'Produk'),
-                  Tab(text: 'Harga Config'),
+                  Tab(text: 'Harga'),
                   Tab(text: 'Stok Botol'),
                 ],
               ),
@@ -170,9 +173,17 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
     if (state is! ProductLoaded) {
       return Row(
         children: [
-          _buildHeaderStat(icon: Icons.inventory_2_outlined, label: 'TOTAL PRODUK', value: '-'),
+          _buildHeaderStat(
+            icon: Icons.inventory_2_outlined,
+            label: 'TOTAL PRODUK',
+            value: '-',
+          ),
           const SizedBox(width: 16),
-          _buildHeaderStat(icon: Icons.warning_amber_rounded, label: 'STOK MENIPIS', value: '-'),
+          _buildHeaderStat(
+            icon: Icons.warning_amber_rounded,
+            label: 'STOK MENIPIS',
+            value: '-',
+          ),
         ],
       );
     }
@@ -193,6 +204,9 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
           label: 'STOK MENIPIS',
           value: '$lowStockCount',
           isWarning: lowStockCount > 0,
+          onTap: lowStockCount > 0
+              ? () => _showLowStockDialog(context, products)
+              : null,
         ),
       ],
     );
@@ -203,61 +217,125 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
     required String label,
     required String value,
     bool isWarning = false,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      width: 140,
-      height: 140,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        width: 140,
+        height: 140,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isWarning
+                    ? const Color(0xFFFF7675).withValues(alpha: 0.1)
+                    : const Color.fromARGB(225, 238, 242, 255),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                size: 24,
+                color: isWarning
+                    ? const Color(0xFFFF7675)
+                    : const Color.fromARGB(225, 0, 6, 102),
+              ),
+            ),
+            const Spacer(),
+            Text(
+              value,
+              style: TextStyle(
+                fontFamily: 'Plus Jakarta Sans',
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: isWarning
+                    ? const Color(0xFFFF7675)
+                    : const Color.fromARGB(225, 0, 6, 102),
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: const TextStyle(
+                fontFamily: 'Manrope',
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF94A3B8),
+              ),
+            ),
+          ],
+        ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: isWarning
-                  ? const Color(0xFFFF7675).withValues(alpha: 0.1)
-                  : const Color.fromARGB(225, 238, 242, 255),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              icon,
-              size: 24,
-              color: isWarning ? const Color(0xFFFF7675) : const Color.fromARGB(225, 0, 6, 102),
-            ),
-          ),
-          const Spacer(),
-          Text(
-            value,
+    );
+  }
+
+  void _showLowStockDialog(BuildContext context, List<ProductEntity> products) {
+    final lowStockItems = products.where((p) => p.stock < 15).toList();
+    if (lowStockItems.isEmpty) return;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text(
+            'Daftar Stok Menipis',
             style: TextStyle(
               fontFamily: 'Plus Jakarta Sans',
-              fontSize: 28,
               fontWeight: FontWeight.bold,
-              color: isWarning ? const Color(0xFFFF7675) : const Color.fromARGB(225, 0, 6, 102),
             ),
           ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: const TextStyle(
-              fontFamily: 'Manrope',
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF94A3B8),
+          content: SizedBox(
+            width: double.maxFinite,
+            height: 300,
+            child: ListView.builder(
+              itemCount: lowStockItems.length,
+              itemBuilder: (context, index) {
+                final item = lowStockItems[index];
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.warning, color: Color(0xFFFF7675)),
+                  title: Text(
+                    item.name,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(item.category),
+                  trailing: Text(
+                    'Sisa: ${item.stock}',
+                    style: const TextStyle(
+                      color: Color(0xFFFF7675),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                'Tutup',
+                style: TextStyle(color: Color.fromARGB(225, 0, 6, 102)),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -268,7 +346,11 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
     return BlocBuilder<ProductBloc, ProductState>(
       builder: (context, state) {
         if (state is ProductLoading || state is ProductInitial) {
-          return const Center(child: CircularProgressIndicator(color: Color.fromARGB(225, 0, 6, 102)));
+          return const Center(
+            child: CircularProgressIndicator(
+              color: Color.fromARGB(225, 0, 6, 102),
+            ),
+          );
         } else if (state is ProductError) {
           return Center(child: Text(state.message));
         } else if (state is ProductLoaded) {
@@ -276,14 +358,20 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
           return Column(
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
                 child: TextField(
                   controller: _searchController,
                   style: const TextStyle(fontSize: 14),
                   decoration: InputDecoration(
                     hintText: 'Cari nama produk...',
                     hintStyle: const TextStyle(color: Color(0xFFADB5BD)),
-                    prefixIcon: const Icon(Icons.search, color: Color(0xFFADB5BD)),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      color: Color(0xFFADB5BD),
+                    ),
                     filled: true,
                     fillColor: Colors.white,
                     contentPadding: const EdgeInsets.symmetric(vertical: 14),
@@ -327,7 +415,11 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
                                 color: const Color.fromARGB(225, 0, 6, 102),
                                 borderRadius: BorderRadius.circular(16),
                               ),
-                              child: const Icon(Icons.sanitizer_outlined, color: Colors.white, size: 26),
+                              child: const Icon(
+                                Icons.sanitizer_outlined,
+                                color: Colors.white,
+                                size: 26,
+                              ),
                             ),
                             const SizedBox(width: 16),
                             Expanded(
@@ -345,9 +437,14 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
                                   ),
                                   const SizedBox(height: 8),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
                                     decoration: BoxDecoration(
-                                      color: categoryColor.withValues(alpha: 0.1),
+                                      color: categoryColor.withValues(
+                                        alpha: 0.1,
+                                      ),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Text(
@@ -367,20 +464,31 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: isLowStock
-                                        ? const Color(0xFFFF7675).withValues(alpha: 0.1)
-                                        : const Color(0xFF00B894).withValues(alpha: 0.1),
+                                        ? const Color(
+                                            0xFFFF7675,
+                                          ).withValues(alpha: 0.1)
+                                        : const Color(
+                                            0xFF00B894,
+                                          ).withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(
-                                        isLowStock ? Icons.warning_amber_rounded : Icons.inventory_2_outlined,
+                                        isLowStock
+                                            ? Icons.warning_amber_rounded
+                                            : Icons.inventory_2_outlined,
                                         size: 12,
-                                        color: isLowStock ? const Color(0xFFFF7675) : const Color(0xFF00B894),
+                                        color: isLowStock
+                                            ? const Color(0xFFFF7675)
+                                            : const Color(0xFF00B894),
                                       ),
                                       const SizedBox(width: 4),
                                       Text(
@@ -389,11 +497,67 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
                                           fontFamily: 'Plus Jakarta Sans',
                                           fontSize: 10,
                                           fontWeight: FontWeight.bold,
-                                          color: isLowStock ? const Color(0xFFFF7675) : const Color(0xFF00B894),
+                                          color: isLowStock
+                                              ? const Color(0xFFFF7675)
+                                              : const Color(0xFF00B894),
                                         ),
                                       ),
                                     ],
                                   ),
+                                ),
+                                const SizedBox(height: 8),
+                                PopupMenuButton<String>(
+                                  icon: const Icon(
+                                    Icons.more_horiz,
+                                    color: Color(0xFF94A3B8),
+                                  ),
+                                  onSelected: (value) {
+                                    if (value == 'edit') {
+                                      _showEditProductDialog(context, item);
+                                    } else if (value == 'delete') {
+                                      _showDeleteProductDialog(context, item);
+                                    }
+                                  },
+                                  itemBuilder: (context) => [
+                                    const PopupMenuItem(
+                                      value: 'edit',
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.edit,
+                                            size: 18,
+                                            color: Color.fromARGB(
+                                              225,
+                                              0,
+                                              6,
+                                              102,
+                                            ),
+                                          ),
+                                          SizedBox(width: 8),
+                                          Text('Edit Produk'),
+                                        ],
+                                      ),
+                                    ),
+                                    const PopupMenuItem(
+                                      value: 'delete',
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.delete_outline,
+                                            size: 18,
+                                            color: Color(0xFFFF7675),
+                                          ),
+                                          SizedBox(width: 8),
+                                          Text(
+                                            'Hapus',
+                                            style: TextStyle(
+                                              color: Color(0xFFFF7675),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
@@ -419,7 +583,11 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
     return BlocBuilder<PriceConfigBloc, PriceConfigState>(
       builder: (context, state) {
         if (state is PriceConfigLoading || state is PriceConfigInitial) {
-          return const Center(child: CircularProgressIndicator(color: Color.fromARGB(225, 0, 6, 102)));
+          return const Center(
+            child: CircularProgressIndicator(
+              color: Color.fromARGB(225, 0, 6, 102),
+            ),
+          );
         } else if (state is PriceConfigError) {
           return Center(child: Text(state.message));
         } else if (state is PriceConfigLoaded) {
@@ -431,7 +599,9 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
           };
 
           for (var c in configs) {
-            final jenisLable = c.jenis == 'beli_baru' ? 'Beli Baru' : 'Isi Ulang';
+            final jenisLable = c.jenis == 'beli_baru'
+                ? 'Beli Baru'
+                : 'Isi Ulang';
             grouped[jenisLable] ??= {};
             grouped[jenisLable]![c.kualitas] ??= [];
             grouped[jenisLable]![c.kualitas]!.add(c);
@@ -473,22 +643,32 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
                             color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
-                          )
+                          ),
                         ],
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
-                                color: const Color.fromARGB(225, 0, 6, 102).withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(8)),
+                              color: const Color.fromARGB(
+                                225,
+                                0,
+                                6,
+                                102,
+                              ).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                             child: Text(
                               'Kualitas $kualitas',
                               style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Color.fromARGB(225, 0, 6, 102)),
+                                fontWeight: FontWeight.bold,
+                                color: Color.fromARGB(225, 0, 6, 102),
+                              ),
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -497,25 +677,37 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 8.0),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(c.ukuran, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  Text(
+                                    c.ukuran,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                   Row(
                                     children: [
                                       Text(
                                         'Rp ${formatter.format(c.harga)}',
-                                        style: const TextStyle(fontWeight: FontWeight.w600),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                       ),
                                       IconButton(
-                                        icon: const Icon(Icons.edit, size: 16, color: Color(0xFF94A3B8)),
+                                        icon: const Icon(
+                                          Icons.edit,
+                                          size: 16,
+                                          color: Color(0xFF94A3B8),
+                                        ),
                                         constraints: const BoxConstraints(),
                                         padding: const EdgeInsets.only(left: 8),
                                         onPressed: () {
                                           _showEditHargaDialog(context, c);
                                         },
-                                      )
+                                      ),
                                     ],
-                                  )
+                                  ),
                                 ],
                               ),
                             );
@@ -551,16 +743,26 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Batal'),
+            ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color.fromARGB(225, 0, 6, 102)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color.fromARGB(225, 0, 6, 102),
+              ),
               onPressed: () {
                 final val = int.tryParse(controller.text) ?? 0;
                 final updated = config.copyWith(harga: val);
-                context.read<PriceConfigBloc>().add(UpdatePriceConfigEvent(updated));
+                context.read<PriceConfigBloc>().add(
+                  UpdatePriceConfigEvent(updated),
+                );
                 Navigator.pop(context);
               },
-              child: const Text('Simpan', style: TextStyle(color: Colors.white)),
+              child: const Text(
+                'Simpan',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         );
@@ -575,7 +777,11 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
     return BlocBuilder<BottleStockBloc, BottleStockState>(
       builder: (context, state) {
         if (state is BottleStockLoading || state is BottleStockInitial) {
-          return const Center(child: CircularProgressIndicator(color: Color.fromARGB(225, 0, 6, 102)));
+          return const Center(
+            child: CircularProgressIndicator(
+              color: Color.fromARGB(225, 0, 6, 102),
+            ),
+          );
         } else if (state is BottleStockError) {
           return Center(child: Text(state.message));
         } else if (state is BottleStockLoaded) {
@@ -597,7 +803,7 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
                       color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
-                    )
+                    ),
                   ],
                 ),
                 child: Row(
@@ -605,16 +811,31 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                          color: const Color.fromARGB(225, 0, 6, 102).withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12)),
-                      child: const Icon(Icons.water_drop_outlined, color: Color.fromARGB(225, 0, 6, 102)),
+                        color: const Color.fromARGB(
+                          225,
+                          0,
+                          6,
+                          102,
+                        ).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.water_drop_outlined,
+                        color: Color.fromARGB(225, 0, 6, 102),
+                      ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Botol ${stock.ukuran}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          Text(
+                            'Botol ${stock.ukuran}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
                           const SizedBox(height: 4),
                           Text(
                             'Sisa ${stock.stok} unit',
@@ -631,7 +852,7 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
                       onPressed: () {
                         _showEditStokDialog(context, stock);
                       },
-                    )
+                    ),
                   ],
                 ),
               );
@@ -654,20 +875,144 @@ class _CatalogPageState extends State<CatalogPage> with SingleTickerProviderStat
             controller: controller,
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
+            decoration: const InputDecoration(border: OutlineInputBorder()),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color.fromARGB(225, 0, 6, 102),
+              ),
+              onPressed: () {
+                final val = int.tryParse(controller.text) ?? 0;
+                context.read<BottleStockBloc>().add(
+                  UpdateBottleStockEvent(stock.ukuran, val),
+                );
+                Navigator.pop(context);
+              },
+              child: const Text(
+                'Simpan',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showEditProductDialog(BuildContext context, ProductEntity product) {
+    final nameController = TextEditingController(text: product.name);
+    final categoryController = TextEditingController(text: product.category);
+    final stockController = TextEditingController(
+      text: product.stock.toString(),
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Edit Produk'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Nama Produk',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: categoryController,
+                  decoration: const InputDecoration(
+                    labelText: 'Kategori (Laki/Perempuan/Unisex)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: stockController,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  decoration: const InputDecoration(
+                    labelText: 'Stok Terkini',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Batal'),
+            ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color.fromARGB(225, 0, 6, 102)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color.fromARGB(225, 0, 6, 102),
+              ),
               onPressed: () {
-                final val = int.tryParse(controller.text) ?? 0;
-                context.read<BottleStockBloc>().add(UpdateBottleStockEvent(stock.ukuran, val));
+                final updProduct = product.copyWith(
+                  name: nameController.text.trim(),
+                  category: categoryController.text.trim(),
+                  stock: int.tryParse(stockController.text.trim()) ?? 0,
+                );
+                context.read<ProductBloc>().add(UpdateProductEvent(updProduct));
                 Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Produk berhasil diperbarui!')),
+                );
               },
-              child: const Text('Simpan', style: TextStyle(color: Colors.white)),
+              child: const Text(
+                'Simpan',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showDeleteProductDialog(BuildContext context, ProductEntity product) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Hapus Produk?'),
+          content: Text(
+            'Apakah Anda yakin ingin menghapus produk "${product.name}"? Ini tidak dapat dibatalkan.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                'Batal',
+                style: TextStyle(color: Color.fromARGB(225, 0, 6, 102)),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFF7675),
+              ),
+              onPressed: () {
+                if (product.id != null) {
+                  context.read<ProductBloc>().add(
+                    DeleteProductEvent(product.id!),
+                  );
+                }
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Produk dihapus!')),
+                );
+              },
+              child: const Text('Hapus', style: TextStyle(color: Colors.white)),
             ),
           ],
         );

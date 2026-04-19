@@ -25,6 +25,8 @@ import 'domain/usecases/generate_bottle_stock.dart';
 
 import 'presentation/catalog/bloc/product_bloc.dart';
 import 'presentation/catalog/bloc/product_event.dart';
+import 'domain/usecases/update_product.dart';
+import 'domain/usecases/delete_product.dart';
 import 'presentation/catalog/bloc/price_config_bloc.dart';
 import 'presentation/catalog/bloc/price_config_event.dart';
 import 'presentation/catalog/bloc/bottle_stock_bloc.dart';
@@ -57,6 +59,8 @@ void main() async {
   final deleteTransaction = DeleteTransaction(transactionRepository);
   final getProducts = GetProducts(productRepository);
   final addProduct = AddProduct(productRepository);
+  final updateProduct = UpdateProduct(productRepository);
+  final deleteProduct = DeleteProduct(productRepository);
 
   final getPriceConfigs = GetPriceConfigs(priceConfigRepository);
   final updatePriceConfig = UpdatePriceConfig(priceConfigRepository);
@@ -73,6 +77,8 @@ void main() async {
       deleteTransactionUseCase: deleteTransaction,
       getProductsUseCase: getProducts,
       addProductUseCase: addProduct,
+      updateProductUseCase: updateProduct,
+      deleteProductUseCase: deleteProduct,
       getPriceConfigsUseCase: getPriceConfigs,
       updatePriceConfigUseCase: updatePriceConfig,
       getBottleStocksUseCase: getBottleStocks,
@@ -90,6 +96,8 @@ class MyApp extends StatelessWidget {
   
   final GetProducts getProductsUseCase;
   final AddProduct addProductUseCase;
+  final UpdateProduct updateProductUseCase;
+  final DeleteProduct deleteProductUseCase;
 
   final GetPriceConfigs getPriceConfigsUseCase;
   final UpdatePriceConfig updatePriceConfigUseCase;
@@ -106,6 +114,8 @@ class MyApp extends StatelessWidget {
     required this.deleteTransactionUseCase,
     required this.getProductsUseCase,
     required this.addProductUseCase,
+    required this.updateProductUseCase,
+    required this.deleteProductUseCase,
     required this.getPriceConfigsUseCase,
     required this.updatePriceConfigUseCase,
     required this.getBottleStocksUseCase,
@@ -129,6 +139,8 @@ class MyApp extends StatelessWidget {
           create: (context) => ProductBloc(
             getProductsUseCase: getProductsUseCase,
             addProductUseCase: addProductUseCase,
+            updateProductUseCase: updateProductUseCase,
+            deleteProductUseCase: deleteProductUseCase,
           )..add(LoadProductsEvent()),
         ),
         BlocProvider<PriceConfigBloc>(

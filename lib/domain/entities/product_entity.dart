@@ -15,4 +15,18 @@ class ProductEntity extends Equatable {
 
   @override
   List<Object?> get props => [id, name, category, stock];
+
+  ProductEntity copyWith({
+    String? id,
+    String? name,
+    String? category,
+    int? stock,
+  }) {
+    return ProductEntity(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      category: category ?? this.category,
+      stock: stock ?? this.stock,
+    );
+  }
 }

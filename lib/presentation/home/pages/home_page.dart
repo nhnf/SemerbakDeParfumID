@@ -9,8 +9,8 @@ import '../widgets/recent_transactions_list.dart';
 import '../../transaction/pages/all_transactions_page.dart';
 import '../../transaction/bloc/transaction_bloc.dart';
 import '../../transaction/bloc/transaction_event.dart';
-import '../../catalog/bloc/product_bloc.dart';
-import '../../catalog/bloc/product_event.dart';
+import '../../catalog/bloc/bottle_stock_bloc.dart';
+import '../../catalog/bloc/bottle_stock_event.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -30,7 +30,7 @@ class _HomePageState extends State<HomePage> {
         child: RefreshIndicator(
           onRefresh: () async {
             context.read<TransactionBloc>().add(LoadTransactionsEvent());
-            context.read<ProductBloc>().add(LoadProductsEvent());
+            context.read<BottleStockBloc>().add(LoadBottleStocksEvent());
           },
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),

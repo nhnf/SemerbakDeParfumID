@@ -66,24 +66,23 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
     }
 
     try {
-      // Gunakan orElse alih-alih try-catch agar kode tidak melempar error
-      final config = configs.firstWhere(
-        (c) =>
-            c.jenis == _jenis &&
-            c.kualitas == _selectedKualitas &&
-            c.ukuran == _selectedUkuran,
-        orElse: () => const PriceConfigEntity(
-          // Catatan: Hapus kata 'const' jika error merah di IDE
+      PriceConfigEntity? config;
+      try {
+        config = configs.firstWhere(
+          (c) => c.jenis == _jenis && c.kualitas == _selectedKualitas && c.ukuran == _selectedUkuran,
+        );
+      } catch (_) {
+        config = const PriceConfigEntity(
           jenis: '',
           kualitas: '',
           ukuran: '',
           harga: 0,
-        ),
-      );
+        );
+      }
 
       setState(() {
         _totalHarga =
-            config.harga * _qty; // Lebih rapi, tidak perlu config?.harga lagi
+            (config?.harga ?? 0) * _qty; // Lebih rapi, memakai null assertion fallback aman
       });
     } catch (e, stack) {
       ScaffoldMessenger.of(context).showSnackBar(
